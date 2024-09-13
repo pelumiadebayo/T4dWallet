@@ -71,8 +71,8 @@ npm install
 ```bash
 npm start
 ```
-
 The frontend should now be running, typically on port 3000.
+
 ---
 
 ## Usage
@@ -126,6 +126,8 @@ We welcome contributions! Whether it's fixing bugs, adding new features, or impr
         - Bug Fixes: Fix the dollar sign bug for the 'multiple currencies' feature. [See docs/features.md](./docs/api.md) [Your Name]
 
 
+---
+
 ## Issues and Feature Requests
 
 If you encounter any issues, or bugs, feel free to open an issue. Please be as detailed as possible in your description. Log all issues and bugs in the project's Github issue Tracker.
@@ -156,6 +158,7 @@ If you have ideas for new features,  feel free to open an issue to suggest it.
 5. **Consider Implementation**: If possible, share how the feature could be implemented or offer to work on it.
 
 You can use this [template](https://github.com/pelumiadebayo/T4dWallet/wiki/suggesting-features#example-feature-request-template) in wiki for feature requests.
+
 ---
 
 ## Using Project's Wikis to Understand the Project
@@ -176,6 +179,7 @@ It contain a detailed overview of the project, its goals, and its current state,
 - Getting Started Guide: Instructions to set up the project locally.
 - Architecture Overview: A high-level look at the system’s components and how they interact.
 - Contribution Guidelines: Information on how to contribute to the project, file issues, and make pull requests.
+
 ---
 
 ## License
