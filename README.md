@@ -29,7 +29,6 @@ git clone https://github.com/pelumiadebayo/T4dWallet.git
 cd T4dWallet
 ```
 
-
 ### Running the Backend
 
 1. Navigate to the backend folder:
@@ -74,7 +73,7 @@ npm start
 ```
 
 The frontend should now be running, typically on port 3000.
-
+---
 
 ## Usage
 
@@ -157,7 +156,7 @@ If you have ideas for new features,  feel free to open an issue to suggest it.
 5. **Consider Implementation**: If possible, share how the feature could be implemented or offer to work on it.
 
 You can use this [template](https://github.com/pelumiadebayo/T4dWallet/wiki/suggesting-features#example-feature-request-template) in wiki for feature requests.
-
+---
 
 ## Using Project's Wikis to Understand the Project
 Use the project's wiki to get a deeper understanding of the project and to find important information.
