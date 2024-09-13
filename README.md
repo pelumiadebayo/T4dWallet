@@ -141,7 +141,7 @@ If you encounter any issues, or bugs, feel free to open an issue. Please be as d
    - If possible, suggest a solution.
 
 3. **Label the Issue**: Add appropriate labels, such as `bug`, `enhancement`, or `documentation`.
-4. 
+   
 You can use this [template](https://github.com/pelumiadebayo/T4dWallet/wiki/Issue-and-Bug-Reporting-Guidelines#example-issuebug-template) in wiki for raising bugs or issues.
 
 
