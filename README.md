@@ -158,56 +158,11 @@ If you have ideas for new features,  feel free to open an issue to suggest it.
 
 You can use this [template](https://github.com/pelumiadebayo/T4dWallet/wiki/suggesting-features#example-feature-request-template) in wiki for feature requests.
 
-## Using GitHub Projects for Project Management
-
-GitHub Projects is used in this project for managing tasks, Collaborate effectively, stay organized, and keep track of project progress in a transparent manner and tracking the progress of the project in an organized way.
-You can find the project board here: [T4dWallet project](https://github.com/pelumiadebayo/T4dWallet/projects)
-
-### Why We Use GitHub Projects?
-
-1. **To Visualize Workflows**: GitHub Projects allows you to create **Kanban-style boards** that help visualize workflows, from "To Do" to "In Progress" to "Done."
-   
-2. **To Track Progress**: It helps track the status of issues, pull requests, and tasks. This is especially useful for coordinating between multiple contributors.
-
-3. **To Prioritize Work**: Organize issues and tasks by priority so everyone knows what to focus on next.
-
-### How to Use GitHub Projects for effective project management.
-
-1. **Access the Project Board**: Navigate to the **Projects** tab within the GitHub repository to view the project board. The board consists of columns, typically labeled "To Do," "In Progress," and "Done."
-   
-2. **Add Issues/Tasks to the Board**:
-- Issues and pull requests from the repository can be added to the project board.
-- You can also create tasks within the project board directly.
-
-3. **Track Task Status**: Each task moves through columns as it progresses. Contributors can drag and drop cards between columns to update their status;
-- **To Do**: Tasks or issues that need attention.
-- **In Progress**: Tasks actively being worked on.
-- **Done**: Completed tasks/issues.
-
-4. **Use Milestones**: Organize your tasks by setting **milestones**, which are goals or deadlines you want to achieve. Milestones allow you to group issues and pull requests into specific releases or phases of the project.
-
-5. **Assign Contributors**: You can assign contributors to specific issues or tasks on the board. This helps clarify responsibility and ensures the right people are working on the right tasks.
-
-6. **Use Labels**: Use labels to categorize tasks by type (e.g., `bug`, `enhancement`, `documentation`). This helps organize work and makes it easier to filter tasks based on what’s important.
-
-### Example Workflow:
-
-1. **Create a Task**: Someone creates a new issue in the repository (e.g., "Add payment gateway integration").
-   
-2. **Add the Issue to the Project**: The issue is added to the "To Do" column in the GitHub Project board.
-
-3. **Assign and Prioritize**: A team member is assigned to the issue, and it’s labeled with `high priority`.
-
-4. **Move to In Progress**: When the team member starts working on the issue, they move the card to the "In Progress" column.
-
-5. **Completion**: Once the work is done and the pull request is merged, the card is moved to the "Done" column.
-
----
 
 ## Using Project's Wikis to Understand the Project
 Use the project's wiki to get a deeper understanding of the project and to find important information.
 Every Information here and more is contained in the project's wiki.
-It contain a detailed overview of the project, its goals, and its current state, including project Architecture and Technicals. Documentation. You can find it here: [Project wiki](https://github.com/pelumiadebayo/T4dWallet/wiki)
+It contain a detailed overview of the project, its goals, and its current state, including project Architecture, Technicals Documentation, and information for project management. You can find it here: [Project wiki](https://github.com/pelumiadebayo/T4dWallet/wiki)
 
 ### How to Navigate the Wiki
 
