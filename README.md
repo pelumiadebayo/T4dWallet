@@ -15,6 +15,7 @@
 ---
 
 ## Installation
+This project follows a monorepo structure, where both the backend (API) and frontend (UI) are housed in the same repository.
 
 ### Prerequisites
 Before you begin, ensure you have the following:
@@ -27,26 +28,53 @@ Before you begin, ensure you have the following:
 git clone https://github.com/pelumiadebayo/T4dWallet.git
 cd T4dWallet
 ```
-### Install Dependencies
+
+
+### Running the Backend
+
+1. Navigate to the backend folder:
+```bash
+cd backend
+```
+
+2. Install the dependencies:
 ```bash
 npm install
 ```
 
-### Environment Setup
+3. Environment Setup:
 Create a `.env` file in the root of the project and set the following environment variables:
 ```env
 DATABASE_URL=mongodb://localhost:27017/T4dWallet
 JWT_SECRET=your_secret_key
 ```
 
-### Run the Application
-Start the development server:
+4. Start the backend server:
 ```bash
-npm run dev
+npm start
 ```
-The application will be running at `http://localhost:3000`.
 
----
+The backend should now be running, typically on port 5000.
+
+### Running the Frontend
+1. Navigate to the frontend folder:
+
+```bash
+cd frontend
+```
+
+2. Install the dependencies:
+```bash
+npm install
+```
+
+3. Start the frontend application:
+```bash
+npm start
+```
+
+The frontend should now be running, typically on port 3000.
+
 
 ## Usage
 
@@ -69,7 +97,7 @@ We welcome contributions! Whether it's fixing bugs, adding new features, or impr
    ```bash
    git checkout -b feature/your-feature-name
    ```
-3. Make your changes and commit them. There can only be one commit per pull request. Use 'git ammend' to make chages to your commits if need be:
+3. Make your changes and commit them. There can only be one commit per pull request.
    ```bash
    git commit -m "Add feature: your feature name"
    ```
@@ -77,28 +105,15 @@ We welcome contributions! Whether it's fixing bugs, adding new features, or impr
    ```bash
    git push origin feature/your-feature-name
    ```
-5. Open a pull request from your fork to the `main` branch of the original repository. Use this format/example below:
- ```markdown
-  ### What has Changed?
-  A new checkbox in login page...
-  
-  ### Why the Change?
-  To accomodate "forget password"...
-  
-  ### How Was the Change Tested?
-  All unit tests for the project passed...
+5. Open a pull request from your fork to the `main` branch of the original repository. Use the format/example for [Pull Request](https://github.com/pelumiadebayo/T4dWallet/wiki/Issue-and-Bug-Reporting-Guidelines#example-issuebug-template) in wiki.
 
-  ### Where was the change documented?
-  changes in this code is documented here: docs/api.md
-```
 
 ## Contribution Guidelines
 
-1. **Code Standards:** Please ensure that your code follows the project's coding standards. We use **ESLint** for linting and **Prettier** for formatting.
+1. **Code Standards:** Please ensure that your code follows the project's coding standards. We use **ESLint** for linting and **Prettier** for formatting. Write meaningful commit messages using inline comments or documentation blocks
 2. **Testing:** All new features and bug fixes must include tests. We use **Jest** for unit tests.
 3. **Documentation:** Any changes or new features should be accompanied by appropriate documentation updates. The documentation guideline is as follows;
 
-- First, Ensure functions, classes, or modules are documented inline (using comments or documentation blocks). Also mention the feature the changes is for
 - docs/features.md - Explains newly added features.
 - docs/api.md - Detailed API documentation.
 - docs/configuration.md - Advanced configuration options
@@ -107,110 +122,41 @@ We welcome contributions! Whether it's fixing bugs, adding new features, or impr
         ### [v1.2.0] - 2024-09-12: Added
         - New Feature: Added Ability to manage multiple currencies in wallets. [See docs/features.md](./docs/features.md) [Your Name]
         OR
-        - Changes: Added new field to support doller currency in 'multiple currencies' feature. [See docs/features.md](./docs/features.md) [Your Name]
+        - Changes: Added new field to support dollsr currency in 'multiple currencies' feature. [See docs/features.md](./docs/features.md) [Your Name]
         OR
         - Bug Fixes: Fix the dollar sign bug for the 'multiple currencies' feature. [See docs/features.md](./docs/api.md) [Your Name]
 
 
 ## Issues and Feature Requests
 
-If you encounter any issues, or have ideas for new features, feel free to open an issue. Please be as detailed as possible in your description. Log all issues and bugs in the project's github issue Tracker.
+If you encounter any issues, or bugs, feel free to open an issue. Please be as detailed as possible in your description. Log all issues and bugs in the project's Github issue Tracker.
 ### How to Raise Issues/Bugs
-
-1. **Search Existing Issues First**: Before creating a new issue, search through the existing issues to see if the same problem or feature has already been reported or discussed.
    
-2. **Describe the Problem Clearly**: Use a descriptive title for the issue. Clearly explain the problem you're facing. Include as much relevant detail as possible, such as:
-- What were you trying to do?
-- What did you expect to happen?
-- What actually happened?
+1. **Search for Existing Issues**: Before creating a new issue, check the [Issue Tracker](https://github.com/T4dWallet/issues) to see if the same problem has already been reported or discussed.
 
-3. **Include Steps to Reproduce**: Provide a step-by-step list of actions that caused the problem. This helps others reproduce the issue quickly.
+2. **Submit a New Issue**: If the issue hasn’t been reported, click "New Issue" and provide:
+   - A **clear and concise title**.
+   - A **description** of the problem, including steps to reproduce it.
+   - Any **logs or screenshots** that can help us diagnose the issue.
+   - If possible, suggest a solution.
 
-4. **Provide Context**: Mention the environment you were working in when the issue occurred, such as:
-- Operating System (e.g., Windows, Linux)
-- Browser (if applicable)
-- Node.js version (or any other relevant software)
-- Specific branch or version of the codebase.
-
-5. **Add Screenshots/Logs (if possible)**: Attach screenshots or logs to help others visualize or diagnose the issue more effectively.
-
-6. **Label the Issue with Severity**: Indicate how critical the bug is (e.g., blocker, high, medium, low). If possible, label the issue with tags(e.g., `critical`, `UI`, `backend`, `bug`, `enhancement`, `question`) to categorize it appropriately.
-
-7. **Link to Documentation** (if necessary): If the bug affects documented features, mention which part of the documentation is impacted.
-
-### Example Issue/bug Template:
-```markdown
-### Issue Title: Brief description of the issue
-
-**Description**
-A clear and concise description of what the bug is or the issue you're experiencing.
-
-**Steps to Reproduce**
-1. Step 1
-2. Step 2
-3. Step 3
-
-**Expected Behavior**
-What you expected to happen.
-
-**Actual Behavior**
-What actually happened.
-
-**Environment**
-- OS: [e.g. Windows 10]
-- Browser: [e.g. Chrome]
-- Node.js version: [e.g. 14.17.0]
-- Branch or version: [e.g. main]
-
-**Screenshots or Logs**
-Attach screenshots, error logs, or any relevant information here.
-
-**Additional Context**
-Add any other context about the problem here.
-
-**Labels, Severity**
-Add any tag here.
-
-**Documentation Link**
-Add link to doc here, if any.
-
-```
+3. **Label the Issue**: Add appropriate labels, such as `bug`, `enhancement`, or `documentation`.
+4. 
+You can use this [template](https://github.com/pelumiadebayo/T4dWallet/wiki/Issue-and-Bug-Reporting-Guidelines#example-issuebug-template) in wiki for raising bugs or issues.
 
 
 ### Suggesting Features
 
-1. **Check for Existing Requests**:
-   - Search the issue tracker to see if the feature request already exists. If it does, you can add to the discussion.
+If you have ideas for new features,  feel free to open an issue to suggest it.
+### How to suggest feature
 
-2. **Provide Clear Motivation**:
-   - Explain **why** you think the feature is valuable. How will it improve the project? Will it solve a particular problem for users?
+1. **Check for Existing Requests**: Search the [Issue Tracker](https://github.com/T4dWallet/issues) to see if the feature request already exists.
+2. **Provide Clear Motivation**: Explain why you think the feature is valuable and how it will improve the project.
+3. **Describe the Feature**: Provide a detailed description of the feature, including any technical details.
+4. **Alternatives**: If there are existing solutions or workarounds, mention those and explain why your proposed feature is better.
+5. **Consider Implementation**: If possible, share how the feature could be implemented or offer to work on it.
 
-3. **Describe the Feature**:
-   - Provide a clear and concise description of the feature, including any technical details or visual mockups if applicable.
-
-4. **List Alternatives**:
-   - If there are existing solutions or workarounds, mention those and explain why your proposed feature is better or necessary.
-
-5. **Consider Implementation**:
-   - If you have thoughts on how the feature could be implemented, share them. If you're able, offer to implement it yourself.
-
-### Example Feature Request Template:
-
-```markdown
-### Feature Request: [Short descriptive title]
-
-**Motivation**
-Describe why this feature is important and how it would improve the project.
-
-**Description**
-A clear description of the feature you're suggesting. Include any relevant details, such as how it should work and any edge cases.
-
-**Alternatives**
-If there are existing features or workarounds that partially address this, mention them and explain why they aren’t sufficient.
-
-**Additional Context**
-Add any other context, mockups, or screenshots related to the feature request here.
-```
+You can use this [template](https://github.com/pelumiadebayo/T4dWallet/wiki/suggesting-features#example-feature-request-template) in wiki for feature requests.
 
 ## Using GitHub Projects for Project Management
 
