@@ -8,6 +8,7 @@ export interface IUser extends Document {
   phone_number: string;
   status: 'ACTIVE' | 'INACTIVE';
   address: string;
+  otp:  mongoose.Types.ObjectId;
   image: string;
   created_at: Date;
   updated_at: Date;
@@ -39,6 +40,13 @@ const userSchema = new Schema<IUser>({
     type: String,
     required: false,
     unique: true,
+    sparse: true,
+  },
+
+  otp: {
+    type: Schema.Types.ObjectId,
+    ref: 'OTP',
+    required: true,
   },
 
   status: {
