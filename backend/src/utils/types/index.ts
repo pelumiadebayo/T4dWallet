@@ -11,7 +11,13 @@ export interface IOTPResponse {
 }
 
 export interface ISignupMail {
-  email: string,
-  otp: string,
+  email: string;
+  otp: string;
   firstName: string;
+}
+
+export interface IForgotPasswordMail {
+  email: string;
+  otp: string;
+  expiresAt: Date;
 }
