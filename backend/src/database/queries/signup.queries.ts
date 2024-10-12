@@ -32,6 +32,6 @@ export const createOTP = async (data: Partial<IOtp>): Promise<IOtp> => {
           failed_attempts: data.failed_attempts,
      })
      
-     return await otp.save()
+     return await otp.save();
  };
  

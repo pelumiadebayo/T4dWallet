@@ -1,5 +1,6 @@
 import nodemailer, { SendMailOptions, Transporter } from "nodemailer";
 import { readEmailTemplate } from "./helper.functions";
+import { IForgotPasswordMail, ISignupMail } from "./types";
 import { ISignupMail } from "./types";
 
 
@@ -77,4 +78,26 @@ export async function sendSignUpMail(payload: ISignupMail): Promise<string> {
      await sendMail(mailOptions);
 
      return "Email Delivered"
+}
+
+export async function sendForgotPasswordMail(payload: IForgotPasswordMail): Promise<string> {
+
+     const { email, otp } = payload
+
+     const emailTemplate = readEmailTemplate('confirmEmail')
+
+     const emailContent = emailTemplate
+          .replace('{{OTP}}', otp)
+
+     const mailOptions: SendMailOptions = {
+          from: '"Td4Wallet" <td4wallet@gmail.com>',
+          to: email,
+          subject: "Email Verification",
+          html: emailContent
+     };
+
+     await sendMail(mailOptions);
+
+     return "Email Delivered"
+
 }
