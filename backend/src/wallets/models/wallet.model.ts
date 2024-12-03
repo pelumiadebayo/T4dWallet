@@ -1,5 +1,16 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
+// export enum WalletStatus {
+//   ACTIVE = 'ACTIVE',
+//   INACTIVE = 'INACTIVE',
+//   SUSPENDED = 'SUSPENDED'
+// }
+
+export interface IWalletStatusUpdateOptions {
+  inactiveDays: number;
+  suspensionDays: number;
+}
+
 export interface IWallet extends Document {
   wallet_id: string;
   balance: Types.Decimal128;
@@ -9,6 +20,8 @@ export interface IWallet extends Document {
   wallet_name: string;
   wallet_pin_changed: boolean;
   status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+  last_transaction_date: Date;
+  last_status_change_date: Date;
   user: mongoose.Types.ObjectId;
   wallet_pin_next_change: Date;
   created_at: Date;
@@ -65,6 +78,16 @@ const walletSchema = new Schema<IWallet>(
       enum: ["ACTIVE", "INACTIVE", "SUSPENDED"],
       default: "ACTIVE",
       required: true,
+    },
+
+    last_transaction_date: {
+      type: Date,
+      default: Date.now
+    },
+
+    last_status_change_date: {
+      type: Date,
+      default: Date.now
     },
 
     user: {

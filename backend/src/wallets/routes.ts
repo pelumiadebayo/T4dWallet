@@ -9,6 +9,8 @@ import {
   WithdrawFundDTO,
 } from "./dtos/wallet.dto";
 import {
+  deactivateWalletController,
+  reactivateWalletController,
   fundWalletController,
   getUserWalletController,
   resolveWalletController,
@@ -23,6 +25,8 @@ import {
   validateWalletPinController,
 } from "./controllers/wallet-pin.controller";
 import { changeWalletPin } from "./services/wallet-pin.service";
+import { getAllTransactionsByWalletController } from "../transactions/controllers/transaction.controller";
+
 
 const router = Router();
 
@@ -51,6 +55,9 @@ router.post(
   TransferFundController as any
 );
 router.get("", authorizeUser, getUserWalletController as any);
+router.get("/wallet-transaction", authorizeUser, getAllTransactionsByWalletController as any);
+router.patch("/reactivate/:walletId", authorizeUser, reactivateWalletController as any);
+router.delete("/deactivate/:walletId", authorizeUser, deactivateWalletController as any);
 
 // wallet pin
 router.post(

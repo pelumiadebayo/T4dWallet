@@ -5,11 +5,14 @@ import {
   successHandler,
 } from "../../utils/helper.functions";
 import {
+  deactivateWallet,
+  reactivateWallet,
   fundWalletService,
   getUserWallet,
   getWalletById,
   withdrawFundService,
 } from "../services/wallet.service";
+
 import {
   FundWalletDTO,
   ResolveWalletDTO,
@@ -19,6 +22,7 @@ import {
   IGetUserWalletResponse,
   IResolveWalletResponse,
 } from "../types/wallet.types";
+import { IGetUserWalletResponse, IReactivateWalletResponse } from "../types/wallet.types";
 
 export const fundWalletController = async (
   req: RequestWithUser,
@@ -93,3 +97,40 @@ export const resolveWalletController = async (
     return errorHandler(res, error.message || "could not resolve wallet");
   }
 };
+
+
+
+export const reactivateWalletController = async(req: RequestWithUser, res: Response) => {
+     try {
+          const { walletId } = req.params;
+          const wallet = await reactivateWallet(walletId, req.user.id);
+
+          const details: IReactivateWalletResponse = {
+               wallet_id: wallet.wallet_id,
+               status: wallet.status,
+               balance: parseFloat(wallet.balance.toString()),
+               last_status_change_date: wallet.last_status_change_date
+          };
+
+          return successHandler(res, "Wallet reactivated successfully", details);
+
+     } catch (error: any) {
+          return errorHandler(res, error.message || "Could not reactivate wallet.");
+     }
+}
+
+export const deactivateWalletController = async(req: RequestWithUser, res: Response) => {
+     try {
+          const { walletId } = req.params;
+          const wallet = await deactivateWallet(walletId, req.user.id);
+
+          const details = {
+               message: wallet.message
+          };
+
+          return successHandler(res, "Wallet successfully deleted", details);
+
+     } catch (error: any) {
+          return errorHandler(res, error.message || "Could not delete a wallet")
+     }
+}

@@ -1,5 +1,5 @@
 import { IUser } from "../../auth/models/user.model";
-import { IWallet, Wallet } from "../models/wallet.model";
+import { IWallet, IWalletStatusUpdateOptions, Wallet } from "../models/wallet.model"
 import {
   cloneObj,
   formatNumberWithComma,
@@ -19,6 +19,7 @@ import { createTransaction } from "../../transactions/services/transaction.servi
 import { TransactionCategory } from "../../transactions/interfaces/transaction.interface";
 import { IMailData } from "../../utils/emails/types";
 import { sendEMail } from "../../utils/emails/send-email";
+import { AuditLog } from "../models/auditlog.model";
 import { validateWalletPin } from "./wallet-pin.service";
 
 /**
@@ -352,6 +353,160 @@ export const getWalletById = async (walletId: string): Promise<IWallet> => {
     throw new Error(error.message || "Could not resolve wallet");
   }
 };
+
+export const updateWalletStatuses = async(
+  options: Partial<IWalletStatusUpdateOptions> = {}
+): Promise<void> => {
+  
+  const { 
+    inactiveDays = process.env.INACTIVE_DAYS, 
+    suspensionDays = process.env.SUSPENSION_DAYS 
+  } = options;
+
+  const now = new Date();
+
+  const wallets = await Wallet.aggregate([
+    {
+      $match: {
+        balance: { $eq: 0 }, // Wallet with zero balance
+        status: { $in: ['ACTIVE', 'INACTIVE'] } // Only update active or inactive wallets
+      }
+    },
+    {
+      $addFields: {
+        daysSinceLastActivity: {
+          $divide: [
+            { $subtract: [now, '$last_transaction_date'] }, 
+            1000 * 60 * 60 * 24
+          ]
+        }
+      }
+    },
+    {
+      $match: {
+        $or: [
+          // Wallets to be marked inactive
+          { 
+            status: 'ACTIVE', 
+            daysSinceLastActivity: { $gte: inactiveDays } 
+          },
+          // Wallets to be suspended
+          { 
+            status: 'INACTIVE', 
+            daysSinceLastActivity: { $gte: suspensionDays } 
+          }
+        ]
+      }
+    }
+  ]);
+
+  // Perform updates with bulk operations
+  if (wallets.length > 0) {
+    const session = await mongoose.startSession();
+
+    try {
+      await session.withTransaction(async () => {
+        // Bulk update wallets
+        const bulkWalletUpdates = wallets.map(wallet => ({
+          updateOne: {
+            filter: { _id: wallet._id },
+            update: { 
+              $set: { 
+                status: wallet.daysSinceLastActivity >= inactiveDays 
+                  ? (wallet.status === 'ACTIVE' ? 'INACTIVE' : 'SUSPENDED')
+                  : wallet.status,
+                last_status_change_date: now
+              } 
+            }
+          }
+        }));
+
+        await Wallet.bulkWrite(bulkWalletUpdates, { session });
+
+        const system_action = process.env.SYSTEM_ACTION
+        const SYSTEM_ACTION = new mongoose.Types.ObjectId(system_action)
+        // Create audit logs
+        const auditLogs = wallets.map(wallet => ({
+          action: wallet.daysSinceLastActivity >= inactiveDays 
+            ? (wallet.status === 'ACTIVE' ? 'INACTIVE' : 'SUSPEND')
+            : '',
+          wallet: wallet._id,
+          performedBy: SYSTEM_ACTION, // System action
+          reason: wallet.daysSinceLastActivity >= inactiveDays 
+            ? (wallet.status === 'ACTIVE' 
+              ? `No activity for ${inactiveDays} days` 
+              : `No activity for ${suspensionDays} days`)
+            : '',
+          created_at: now
+        }));
+
+        await AuditLog.create(auditLogs);
+      });
+    } finally {
+      session.endSession();
+    }
+  };
+}
+
+export const deactivateWallet = async (walletId: string, userId: string): Promise<{message: string}> => {
+  try {
+    const wallet = await Wallet.findOne({wallet_id: walletId}).exec();
+    if (!wallet) throw new Error("No wallet found");
+
+    if (parseFloat(wallet.balance.toString()) > 0) {
+      throw new Error("Cannot delete wallet with non-zero balance");
+    }
+
+    await Wallet.findByIdAndDelete(walletId);
+
+    await AuditLog.create({
+      action: 'DELETE',
+      wallet: walletId,
+      performedBy: new mongoose.Types.ObjectId(userId),
+      reason: 'Wallet permanently removed',
+    });
+
+    return {message: "Wallet successfully deleted"};
+
+  } catch (error) {
+    throw new Error("Error deleting wallet.");
+  }
+}
+
+export const reactivateWallet = async(walletId: string, userId: string): Promise<IWallet> => {
+  try {
+    const wallet = await Wallet.findOne({wallet_id: walletId}).exec();
+    
+    if (!wallet) throw new Error("Wallet not found");
+    
+    if (wallet.status === "ACTIVE") throw new Error("Wallet is already active");
+
+    if (parseFloat(wallet.balance.toString()) <= 0) throw new Error("Wallet has to be funded before you can reactivate");
+
+    // Update wallet status
+    const updateWallet = await Wallet.findOneAndUpdate(
+      { wallet_id: walletId },
+      { 
+        status: 'ACTIVE',
+        last_status_change_date: new Date()
+      },
+      { new: true }
+    );
+
+    // Create audit log
+    await AuditLog.create({
+      action: 'REACTIVATE',
+      wallet: walletId,
+      performedBy: new mongoose.Types.ObjectId(userId),
+      reason: 'Wallet reactivated after funding',
+    });
+
+    return updateWallet;
+
+  } catch (error) {
+      throw new Error("Error reactivating wallet.");
+  };
+}
 
 appEmitter.on(WALLET_EVENTS.WALLET_FUNDED, async (data) => {
   try {
