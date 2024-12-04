@@ -20,7 +20,7 @@ export const TransferFundController = async (
       balance: parseFloat(fundedWallet.curr_wallet.balance.toString()),
     };
 
-    return successHandler(res, "Wallet funded successfully", details);
+    return successHandler(res, "Transfer successful", details);
   } catch (error: any) {
     console.log(error);
     return errorHandler(res, error.message);

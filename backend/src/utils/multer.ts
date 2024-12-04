@@ -2,7 +2,7 @@ import multer from "multer";
 import * as path from "path";
 import * as fs from "fs";
 
-const uploadDir = "file-uploads/";
+const uploadDir = "public/file-uploads/";
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -30,4 +30,5 @@ export const imageUpload = multer({
       cb(new Error("Unsupported file format"));
     }
   },
+  limits: { fileSize: 2 * 1024 * 1024 },
 });

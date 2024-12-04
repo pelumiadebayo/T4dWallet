@@ -8,6 +8,9 @@ import { Wallet } from "../models/wallet.model";
 import bcrypt from "bcrypt";
 import { IUpdateWalletPinPayload } from "../types/wallet.types";
 import mongoose from "mongoose";
+import { logAction } from "../../logs/services/log.service";
+import { appEmitter } from "../../globals/events";
+import { LOG_EVENTS } from "../../logs/events/log.event";
 
 /**
  * Sets a new PIN for the user's wallet. The new PIN is hashed before being saved.
@@ -41,8 +44,22 @@ export const setWalletPin = async (
 
     await wallet.save();
 
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "success",
+      action: "SET_WALLET_PIN",
+      user_id: user.id,
+      details: `Set wallet pin`,
+  })
+
     return true;
   } catch (error: any) {
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "failed",
+      action: "SET_WALLET_PIN",
+      user_id: user.id,
+      details: `Set wallet pin`,
+      error_message: error.message,
+  })
     // console.log("Could not set wallet pin:", error);
     throw new Error(error.message || "Could not set wallet pin");
   }
@@ -94,8 +111,21 @@ export const changeWalletPin = async (
 
     await wallet.save();
 
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "success",
+      action: "CHANGE_WALLET_PIN",
+      user_id: user.id,
+      details: `Change wallet pin`,
+  })
+
     return true;
   } catch (error: any) {
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "failed",
+      action: "CHANGE_WALLET_PIN",
+      user_id: user.id,
+      details: `Change wallet pin`,
+  })
     console.log("Could not set wallet pin:", error);
     throw new Error(error.message || "Could not set wallet pin");
   }
@@ -113,16 +143,13 @@ export const validateWalletPin = async (
       throw new Error("User has not set pin for wallet");
     }
 
-    const result = await bcrypt.compare(walletPin, wallet.wallet_pin);
-
-    console.log(walletPin, result);
-    
+    const result = await bcrypt.compare(walletPin, wallet.wallet_pin);    
 
     // if (!result) {
     //  return false
     // }
     if (!result) {
-      throw new Error("Invalid PIN");
+      throw new Error("Wrong PIN");
     }
 
     return true;

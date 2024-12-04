@@ -5,6 +5,8 @@ import {
   extractCloudinaryPublicId,
   uploadToCloudinary,
 } from "../../utils/cloudinary";
+import { appEmitter } from "../../globals/events";
+import { LOG_EVENTS } from "../../logs/events/log.event";
 
 export class UserService {
   /**
@@ -22,6 +24,7 @@ export class UserService {
     userId: string | Types.ObjectId,
     userData: Partial<IUser>
   ) {
+   try {
     if (!isValidObjectId(userId)) {
       throw new Error("Invalid user Id");
     }
@@ -33,8 +36,25 @@ export class UserService {
     if (user == null) {
       throw new Error("user does not exist");
     }
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "success",
+      action: "EDIT_USER",
+      user_id: userId,
+      details: `Edited user details`,
+    });
 
     return user;
+   } catch(error: any) {
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "failed",
+      action: "EDIT_USER",
+      user_id: userId,
+      details: `Edited user details`,
+      error_message: error.message || "Could not edit user details"
+    });
+    console.log('Could not delete picture');
+    throw new Error(error.message || "Could not edit user details");
+  }
   }
 
   /**
@@ -62,12 +82,28 @@ export class UserService {
 
         await user.save();
       }
+
+      appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+        status: "success",
+        action: "UPDATE_PROFILE_PICTURE",
+        user_id: user.id,
+        details: `Uploaded Profile picture`,
+      });
       return user;
-    } catch (error) {
+    } catch (error: any) {
+      appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+        status: "failed",
+        action: "UPDATE_PROFILE_PICTURE",
+        user_id: userId,
+        details: `Uploaded Profile picture`,
+        error_message: error.message || "Could not upload picture"
+      });
+      console.log("Could not upload picture:- ", error);
+      
       if (imageUpload) {
         await deleteFromCloudinary(imageUpload.public_id);
       }
-      throw error;
+      throw new Error(error.message || "Could not upload picture");
     }
   }
 
@@ -79,7 +115,8 @@ export class UserService {
    * @throws {Error} - If the user is not found or no profile picture exists to delete.
    */
   static async deleteUserProfilePicture(userId: Types.ObjectId) {
-    const user = await User.findById(userId);
+    try {
+      const user = await User.findById(userId);
     if (!user) {
       throw new Error("User not found");
     }
@@ -95,7 +132,24 @@ export class UserService {
     user.image = "";
     await user.save();
 
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "success",
+      action: "DELETE_PROFILE_PICTURE",
+      user_id: userId,
+      details: `Deleted Profile picture`,
+    });
     return user;
+    } catch(error: any) {
+      appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+        status: "failed",
+        action: "DELETE_PROFILE_PICTURE",
+        user_id: userId,
+        details: `Deleted Profile picture`,
+        error_message: error.message || "Could not delete picture"
+      });
+      console.log('Could not delete picture');
+      throw new Error(error.message || "Could not delete picture");
+    }
   }
 
   /**

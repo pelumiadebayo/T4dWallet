@@ -19,6 +19,7 @@ import { Wallet } from "../../../wallets/models/wallet.model";
 import { appEmitter } from "../../../globals/events";
 import { WALLET_EVENTS } from "../../../wallets/events/wallets.events";
 import { validateWalletPin } from "../wallet-pin.service";
+import { LOG_EVENTS } from "../../../logs/events/log.event";
 
 /**
  * Calculates the transfer charge based on the amount.
@@ -50,12 +51,13 @@ export const calculateCharge = (amount: number): ITransferChargeResponse => {
     creditCharge = 50.00
   } 
 
+  const newCreditAmount = amount - creditCharge
   // Return both the charge and the new amount (amount + charge)
   const newAmountWithCharge = amount + charge;
   return {
     charge,
     newAmountWithCharge,
-    creditCharge
+    newCreditAmount,
   };
 };
 
@@ -78,36 +80,39 @@ export const transferFunds = async (
   const session = await mongoose.startSession();
   session.startTransaction();
 
+  const recipientWallet = await Wallet.findOne({
+    wallet_id: payload.receipientId,
+  })
+    .populate<{ user: IUser }>("user");
+
+    if (!recipientWallet) throw new Error("'Unknown wallet id'")
+
+  // Get the recipient's user details
+  const recipient = recipientWallet.user;
+
   try {
-    const { charge, newAmountWithCharge, creditCharge } = calculateCharge(payload.amount);
-    
-    // validate wallet pin
-
-    const validatePin = await validateWalletPin(payload.wallet_pin, user, session);
-
-    if (!validatePin) {
-      throw new Error("Incorrect pin");
+    if (recipient.id === user.id) {
+      throw new Error("Cannot transfer to own account");
+      // throw new Error("Something went wrong! Please try again.");
     }
+
+        // validate wallet pin
+
+        const validatePin = await validateWalletPin(payload.wallet_pin, user, session);
+
+        if (!validatePin) {
+          throw new Error("That is not your pin");
+        }
+
+    const { charge, newAmountWithCharge, newCreditAmount } = calculateCharge(payload.amount);
+    
+
     // Debit the user's wallet
     const debitUserWallet = await debitWalletService(
       user,
       newAmountWithCharge,
       session
     );
-
-    const recipientWallet = await Wallet.findOne({
-      wallet_id: payload.receipientId,
-    })
-      .populate<{ user: IUser }>("user");
-
-      if (!recipientWallet) throw new Error("'Unknown wallet id'")
-
-    // Get the recipient's user details
-    const recipient = recipientWallet.user;
-
-    if (recipient.id === user.id) {
-      throw new Error("Something went wrong! Please try again.");
-    }
 
     // Credit the recipient's wallet
     const creditRecipientWallet = await creditWalletService(
@@ -116,7 +121,7 @@ export const transferFunds = async (
       session
     );
 
-    const transactionRef = generateULIDForEntity("TRANS-");
+    const transactionRef = generateULIDForEntity("TXN-");
 
     // Create a debit transaction for the user
     const transaction = await createTransaction(
@@ -176,6 +181,7 @@ export const transferFunds = async (
     appEmitter.emit(WALLET_EVENTS.FUNDS_TRANSFERRED, {
       sender: user,
       recipientWalletId: payload.receipientId,
+      recipient: recipient,
       amount: payload.amount,
       creditorBalance: parseFloat(
         debitUserWallet.curr_wallet.balance.toString()
@@ -194,6 +200,14 @@ export const transferFunds = async (
 
     return debitUserWallet;
   } catch (error: any) {
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "failed",
+      action: "TRANSFER_FUNDS",
+      user_id: user.id,
+      details: `Transferred ${payload.amount} to ${recipient.first_name} ${recipient.last_name}`,
+      error_message: error.message || "Could not transfer funds from wallet",
+      session: session
+  })
     // Abort the transaction in case of error
     await session.abortTransaction();
     session.endSession();
@@ -204,13 +218,22 @@ export const transferFunds = async (
 
 appEmitter.on(WALLET_EVENTS.FUNDS_TRANSFERRED, async (data) => {
   try {
-    const recipientWallet = await Wallet.findOne({
-      wallet_id: data.recipientWalletId,
-    })
-      .populate<{ user: IUser }>("user")
-      .orFail();
 
-    const recipient = recipientWallet.user;
+    // const recipientWallet = await Wallet.findOne({
+    //   wallet_id: data.recipientWalletId,
+    // })
+    //   .populate<{ user: IUser }>("user")
+    //   .orFail();
+
+    // const recipient = recipientWallet.user;
+
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "success",
+      action: "TRANSFER_FUNDS",
+      user_id: data.sender.id,
+      details: `Transferred ${data.amount} to ${data.recipient.first_name} ${data.recipient.last_name}`,
+      transaction: data.session,
+  })
 
     const mailData1: IMailData = {
       templateKey: "transferEmail",
@@ -218,10 +241,10 @@ appEmitter.on(WALLET_EVENTS.FUNDS_TRANSFERRED, async (data) => {
       placeholders: {
         firstname: data.sender.first_name,
         amount: formatNumberWithComma(data.amount),
-        TransactionID: data.transactionRef,
+        TransactionID: `${data.transactionRef.substring(0, 12)}...`,
         charge: data.charge.toString(),
         Balance: formatNumberWithComma(data.creditorBalance),
-        RecipientName: `${recipient.first_name} ${recipient.last_name}`,
+        RecipientName: `${data.recipient.first_name} ${data.recipient.last_name}`,
         RecipientWalletID: data.recipientWalletId,
         DateTime: data.transactionDate,
       },
@@ -230,14 +253,22 @@ appEmitter.on(WALLET_EVENTS.FUNDS_TRANSFERRED, async (data) => {
 
     await sendEMail(mailData1);
 
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "success",
+      action: "WALLET_FUNDED",
+      user_id: data.recipient.id,
+      details: `Received ${data.amount} from ${data.sender.first_name} ${data.sender.last_name}`,
+      transaction: data.session,
+  })
+
     const mailData2: IMailData = {
       templateKey: "creditEmail",
-      email: recipient.email,
+      email: data.recipient.email,
       placeholders: {
-        firstname: recipient.first_name,
+        firstname: data.recipient.first_name,
         amount: formatNumberWithComma(data.amount),
         SenderName: `${data.sender.first_name} ${data.sender.last_name}`,
-        TransactionID: data.transactionRef,
+        TransactionID: `${data.transactionRef.substring(0, 12)}...`,
         Balance: formatNumberWithComma(data.recipientBalance),
         DateTime: data.transactionDate,
       },

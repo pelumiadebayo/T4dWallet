@@ -20,6 +20,7 @@ import { IMailData } from "../../utils/emails/types";
 import { sendEMail } from "../../utils/emails/send-email";
 import { appEmitter } from "../../globals/events";
 import { WALLET_EVENTS } from "../../wallets/events/wallets.events";
+import { LOG_EVENTS } from "../../logs/events/log.event";
 
 /**
  * Handles user signup by creating a new user, generating an OTP, and sending a verification email.
@@ -66,8 +67,21 @@ export const signupService = async (
 
     await sendEMail(mailData);
 
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "success",
+      action: "SIGN_UP",
+      user_id: newUser.id,
+      details: `Created an account`,
+  })
     return newUser;
   } catch (error: any) {
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "failed",
+      action: "SIGN_UP",
+      name: `${payload.firstName} ${payload.lastName}`,
+      details: `Created an account`,
+      error_message: error.message || "Could not create user"
+  })
     console.log("Could not create user: ", error);
     throw new Error(error.message || "Could not create user");
   }
@@ -138,6 +152,7 @@ export const resendOTPService = async (
 ): Promise<IResendOTPServiceResult> => {
   const { email } = data;
 
+ try {
   const userExist = await findByEmail({ email });
 
   if (!userExist) throw new Error("Unauthorized user");
@@ -166,5 +181,23 @@ export const resendOTPService = async (
   };
 
   await sendEMail(mailData);
+
+  appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+    status: "success",
+    action: "RESEND_OTP",
+    user_id: userExist.id,
+    details: `Resent an otp`,
+})
   return { otp };
+ } catch(error: any) {
+
+  appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+    status: "failed",
+    action: "RESEND_OTP",
+    name: email,
+    details: `Resent an otp`,
+    error_message: error.message || "Could not resend otp"
+})
+  throw new Error(error.message || "Could not resend otp")
+ }
 };

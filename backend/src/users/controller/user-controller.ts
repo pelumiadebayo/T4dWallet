@@ -56,6 +56,7 @@ export class UserController {
         updatedUser
       );
     } catch (error) {
+      console.log(error);
       return errorHandler(res, "Failed to update user profile picture");
     }
   }

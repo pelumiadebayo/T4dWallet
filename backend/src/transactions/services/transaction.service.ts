@@ -5,6 +5,10 @@ import { ITransaction, Transaction } from "../models/transaction.model"
 import { validateOrReject } from "class-validator";
 import mongoose from "mongoose";
 import { paginate } from "../../utils/paginate";
+import { appEmitter } from "../../globals/events";
+import { LOG_EVENTS } from "../../logs/events/log.event";
+import { IUser } from "../../auth/models/user.model";
+import { Wallet } from "../../wallets/models/wallet.model";
 
 
 /**
@@ -16,69 +20,93 @@ import { paginate } from "../../utils/paginate";
  * @throws An error if the transaction creation fails.
  */
 export const createTransaction = async (
-  payload: ICreateTransactionInput,
-  options?: { session: mongoose.ClientSession }
+     payload: ICreateTransactionInput,
+     options?: { session: mongoose.ClientSession }
 ): Promise<ITransaction> => {
-  try {
-    const transaction = new Transaction({
-      transaction_type: payload.transaction_type,
-      amount: payload.amount,
-      charge: payload.charge,
-      currency: payload.currency,
-      transaction_category: payload.transaction_category,
-      transaction_status: payload.transaction_status,
-      balance_before: payload.balance_before,
-      balance_after: payload.balance_after,
-      description: payload.description,
-      transaction_reference: payload.transaction_reference,
-      wallet: payload.wallet,
-      user: payload.user,
-    });
+     try {
+          const transaction = new Transaction({
+               transaction_type: payload.transaction_type,
+               amount: payload.amount,
+               charge: payload.charge,
+               currency: payload.currency,
+               transaction_category: payload.transaction_category,
+               transaction_status: payload.transaction_status,
+               balance_before: payload.balance_before,
+               balance_after: payload.balance_after,
+               description: payload.description,
+               transaction_reference: payload.transaction_reference,
+               wallet: payload.wallet,
+               user: payload.user,
+          });
 
-    return await transaction.save();
+          return await transaction.save();
 
      } catch (error) {
           console.log('could not create transaction', error);
-          
+
           throw new Error('could not create transaction')
      }
 }
 
 // Get all the transactions from a single wallet
-export const getAllTransactionsByWallet = async(walletId: string): Promise<ITransaction[]> => {
+export const getAllTransactionsByWallet = async (walletId: string): Promise<ITransaction[]> => {
      try {
           const wallet_id = new mongoose.Types.ObjectId(walletId);
-          const transactions = await Transaction.find({ wallet: wallet_id}).exec();
-     
-          if (!transactions) throw new Error("Transaction does not exist");
-     
+
+          const wallet = await Wallet.findOne({
+               wallet_id: walletId,
+          }).populate<{ user: IUser }>({
+               path: "user",
+               select: { password: false },
+          });
+          const transactions = await Transaction.find({ wallet: wallet_id }).exec();
+
+          if (!transactions) throw new Error("No transactions made by wallet found");
+
+
+          appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+               status: "success",
+               action: "GET_ALL_TRANSACTIONS",
+               user_id: wallet.user.id,
+               details: `Retrieved all transaction by wallet Id`,
+          })
+
           return transactions;
-   
+
      } catch (error) {
           console.log('Could not get transactions:', error);
           throw new Error('Could not get transactions');
      }
 }
-   
+
 // Get all the transactions made by a user
 export const getAllTransactionsByUser = async (
      userId: string,
      page: number = 1,
      limit: number = 10
-   ): Promise<{
+): Promise<{
      transactions: ITransaction[];
      totalPages: number;
      currentPage: number;
-   }> => {
+}> => {
      try {
           if (page < 1 || limit < 1) {
                throw new Error("Page and limit must be positive integers.");
           }
-     
+
           const userObjectId = new mongoose.Types.ObjectId(userId);
-     
-          const { data, totalPages } = await paginate<ITransaction>(Transaction, { userId: userObjectId }, { page, limit });
-   
+          console.log(userObjectId);
+          
+
+          const { data, totalPages } = await paginate<ITransaction>(Transaction, { user: userId }, { page, limit });
+          
+          appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+               status: "success",
+               action: "GET_ALL_TRANSACTIONS",
+               user_id: userId,
+               details: `Retrieved all transaction by user Id`,
+           })
+
           return {
                transactions: data,
                totalPages,
@@ -92,14 +120,21 @@ export const getAllTransactionsByUser = async (
 };
 
 // Get a single transaction by Id
-export const getTransactionById = async(transactionId: string): Promise<ITransaction> => {
+export const getTransactionById = async (transactionId: string): Promise<ITransaction> => {
      try {
-          const transaction = await Transaction.findById({_id: transactionId});
-     
+          const transaction = await Transaction.findById({ _id: transactionId });
+
           if (!transaction) throw new Error("Transaction not found");
-     
+
+          appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+               status: "success",
+               action: "GET_TRANSACTION_DETAILS",
+               user_id: transaction.user,
+               details: `Retrieved details of transaction ${transactionId}`,
+           })
+
           return transaction;
-   
+
      } catch (error) {
           // console.log('Could not get transaction:', error);
           throw new Error('Could not get transaction');
@@ -107,10 +142,10 @@ export const getTransactionById = async(transactionId: string): Promise<ITransac
 }
 
 // Search transaction by different fields
-export const searchTransactionsService = async(
+export const searchTransactionsService = async (
      userId: string,
      searchDto: SearchTransactionDto
-): Promise<{transactions: ITransaction[]; totalPages: number; currentPages: number}> => {
+): Promise<{ transactions: ITransaction[]; totalPages: number; currentPages: number }> => {
      try {
           const searchParams = plainToInstance(SearchTransactionDto, searchDto);
           await validateOrReject(searchParams);
@@ -144,15 +179,22 @@ export const searchTransactionsService = async(
           const skip = (page - 1) * limit;
           const [transactions, totalCount] = await Promise.all([
                Transaction.find(query)
-                 .sort({ created_at: -1 })
-                 .skip(skip)
-                 .limit(limit),
+                    .sort({ created_at: -1 })
+                    .skip(skip)
+                    .limit(limit),
                Transaction.countDocuments(query),
           ]);
-         
+
           const totalPages = Math.ceil(totalCount / limit);
 
-          return { transactions, totalPages, currentPages: page};
+          appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+               status: "success",
+               action: "SEARCH_TRANSACTIONS",
+               user_id: userId,
+               details: `Searched for a transaction`,
+           })
+
+          return { transactions, totalPages, currentPages: page };
 
      } catch (error) {
           console.error("Error searching transactions:", error);
@@ -161,16 +203,16 @@ export const searchTransactionsService = async(
 }
 
 // Filter transaction by date
-export const getTransactionByDate = async(
+export const getTransactionByDate = async (
      userId: string,
      startDate?: string,
      endDate?: string,
      page: number = 1,
      limit: number = 10
-): Promise<{transactions: ITransaction[]; totalPages: number; currentPages: number}> => {
+): Promise<{ transactions: ITransaction[]; totalPages: number; currentPages: number }> => {
      try {
           const query: any = { user: userId };
-          
+
           if (startDate || endDate) {
                query.created_at = {};
                if (startDate) query.created_at.$gte = new Date(startDate);
@@ -180,9 +222,9 @@ export const getTransactionByDate = async(
           const skip = (page - 1) * limit;
           const [transactions, totalCount] = await Promise.all([
                Transaction.find(query)
-                 .sort({ created_at: -1 })
-                 .skip(skip)
-                 .limit(limit),
+                    .sort({ created_at: -1 })
+                    .skip(skip)
+                    .limit(limit),
                Transaction.countDocuments(query)
           ]);
 
@@ -192,10 +234,25 @@ export const getTransactionByDate = async(
 
           const totalPages = Math.ceil(totalCount / limit);
 
+          appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+               status: "success",
+               action: "FILTER_TRANSACTIONS",
+               user_id: userId,
+               details: `Filtered transactions by date`,
+           })
+
           return { transactions, totalPages, currentPages: page };
 
-     } catch (error) {
-          console.log("Error fetching transactions by dat", error);
-          throw new Error("Error fetching transcations");
+     } catch (error: any) {
+          
+          appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+               status: "failed",
+               action: "FILTER_TRANSACTIONS",
+               user_id: userId,
+               details: `Filtered transactions by date`,
+               error_message: error.message || 'Error fetching transcations'
+           })
+          console.log("Error fetching transactions by date", error);
+          throw new Error(error.message || "Error fetching transcations");
      }
 }

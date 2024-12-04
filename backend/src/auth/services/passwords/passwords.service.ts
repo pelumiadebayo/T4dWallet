@@ -10,12 +10,17 @@ import {
   TResetPasswordPayload,
 } from "./types/passwords.types";
 import { IMailData } from "../../../utils/emails/types";
+import { appEmitter } from "../../../globals/events";
+import { LOG_EVENTS } from "../../../logs/events/log.event";
+
+const MAX_FAILED_ATTEMPTS = 5;
 
 export const forgotPasswordService = async (
   payload: TForgotPasswordPayload
 ): Promise<TForgotPasswordResponse> => {
+  const userExist = await findByEmail(payload);
+
   try {
-    const userExist = await findByEmail(payload);
 
     if (!userExist) throw new Error("User not found");
 
@@ -43,23 +48,35 @@ export const forgotPasswordService = async (
     };
 
     await sendEMail(mailData);
+    
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "success",
+      action: "FORGOT_PASSWORD",
+      user_id: userExist.id,
+      details: `Forgot password`,
+  })
 
     return {
       otp: otp,
       email: payload.email,
     };
   } catch (error: any) {
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "failed",
+      action: "FORGOT_PASSWORD",
+      user_id: userExist.id,
+      details: `Forgot password`,
+      error_message: error.message
+  })
     console.log("Error sending OTP: ", error);
     throw new Error(error.message || "Error sending OTP");
   }
 };
 
-const MAX_FAILED_ATTEMPTS = 5;
-
 export const resetPasswordService = async (payload: TResetPasswordPayload) => {
-  try {
+  const userExist = await findByEmail({email: payload.email});
 
-    const userExist = await findByEmail({email: payload.email});
+  try {
 
     if (!userExist) throw new Error("User not found");
 
@@ -94,9 +111,6 @@ export const resetPasswordService = async (payload: TResetPasswordPayload) => {
       },
       { new: true }
     );
-
-    console.log('pass-', payload.newPassword, 'hashed:- ', hashedPassword, 'updatedUser:- ', updatedUser.password_hash, 'password:- ', userExist.password_hash);
-
     
     if (!updatedUser) {
       await OTP.findByIdAndUpdate(otpRecord._id, {
@@ -109,8 +123,22 @@ export const resetPasswordService = async (payload: TResetPasswordPayload) => {
       failed_attempts: 0,
     });
 
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "success",
+      action: "RESET_PASSWORD",
+      user_id: userExist.id,
+      details: `Reset password`,
+  })
+
     return true;
   } catch (error: any) {
+    appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+      status: "failed",
+      action: "RESET_PASSWORD",
+      user_id: userExist.id,
+      details: `Reset password`,
+      error_message: error.message || "Could not reset password"
+  })
     console.error("Error during password reset: ", error);
     throw new Error(error.message || "Error resetting password");
   }

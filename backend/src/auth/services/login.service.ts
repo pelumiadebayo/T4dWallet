@@ -1,3 +1,5 @@
+import { appEmitter } from "../../globals/events";
+import { LOG_EVENTS } from "../../logs/events/log.event";
 import {
   generateAccessToken,
   isValidPassword,
@@ -16,6 +18,7 @@ export const loginService = async (
   data: ILogin
 ): Promise<ILoginServiceResult> => {
   const { password, email } = data;
+ try {
 
   const userExist = await findByEmail({ email });
 
@@ -25,9 +28,26 @@ export const loginService = async (
     throw new Error("Invalid Password");
 
   const token = generateAccessToken(userExist.id);
+  
+  appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+    status: "success",
+    action: "LOGIN",
+    user_id: userExist.id,
+    details: `Logged in`,
+})
 
   return {
     user: userExist,
     token,
   };
+ } catch (error: any) {
+  appEmitter.emit(LOG_EVENTS.LOG_ACTION, {
+    status: "failed",
+    action: "LOGIN",
+    user_id: email,
+    details: `Could not be Logged in`,
+    error_message: error.message,
+})
+  throw new Error(error.message || "Could not login to account")
+ }
 };

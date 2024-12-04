@@ -8,5 +8,5 @@ export interface ITransferPayload {
 export interface ITransferChargeResponse {
   newAmountWithCharge: number;
   charge: number;
-  creditCharge: number;
+  newCreditAmount: number;
 }

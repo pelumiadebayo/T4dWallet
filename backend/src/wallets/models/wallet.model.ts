@@ -19,7 +19,7 @@ export interface IWallet extends Document {
   owner_fullname: string;
   wallet_name: string;
   wallet_pin_changed: boolean;
-  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "DELETED";
   last_transaction_date: Date;
   last_status_change_date: Date;
   user: mongoose.Types.ObjectId;
@@ -75,19 +75,21 @@ const walletSchema = new Schema<IWallet>(
 
     status: {
       type: String,
-      enum: ["ACTIVE", "INACTIVE", "SUSPENDED"],
+      enum: ["ACTIVE", "INACTIVE", "SUSPENDED", "DELETED"],
       default: "ACTIVE",
       required: true,
     },
 
     last_transaction_date: {
       type: Date,
-      default: Date.now
+      default: Date.now,
+      required: false
     },
 
     last_status_change_date: {
       type: Date,
-      default: Date.now
+      default: Date.now,
+      required: false
     },
 
     user: {

@@ -21,7 +21,7 @@ export const getAllTransactionsByWalletController = async(req: RequestWithUser, 
 
 export const getAllTransactionsByUserController = async(req: RequestWithUser, res: Response) => {
     try {
-        const userId  = req.query.user as string;
+        const userId  = req.user.id;
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
 

@@ -7,7 +7,7 @@ const router = Router();
 
 router.put("/edit", authorizeUser, UserController.editUser as any);
 router.post(
-  "/:id/profile-picture",
+  "/profile/picture",
   imageUpload.single("image"),
   authorizeUser,
   UserController.updateUserProfilePicture as any
